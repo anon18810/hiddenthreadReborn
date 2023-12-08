@@ -806,7 +806,7 @@ function CheckVersion() {
 function addItemsToSelect(items, selectId) {
     for (let item of items) {
         let option = document.createElement('option');
-        let str = `${item.alias} (${item.value})`;
+        let str = item.value ? `${item.alias} (${item.value})` : item.alias;
         let shortStr = str.substring(0, 20);
         option.textContent = shortStr + ((str.length != shortStr.length) ? '...' : '');
         document.getElementById(selectId).add(option);
@@ -819,7 +819,7 @@ function createManager(managerType) {
 
     // Обновляем пароли/ключи из хранилища
     if (managerType == 'Password') {
-        passwords = storage.passwords ? storage.passwords : [];
+        passwords = storage.passwords ? storage.passwords : [{alias:'Без пароля', value:''}];
         items = passwords;
         header1 = '<th style="width:250px">Пароль</th>';
     } else if (managerType == 'PrivateKey') {
@@ -941,7 +941,8 @@ function createManager(managerType) {
             }
         }
         let selectOptions = document.getElementById(`ht${managerType}Select`).getElementsByTagName('option');
-        for (let i = selectOptions.length - 1; i > 1; i--) {
+		let endI = managerType == "Password" ? 0 : 1;
+        for (let i = selectOptions.length - 1; i > endI; i--) {
             selectOptions[i].remove();
         }
         addItemsToSelect(items, `ht${managerType}Select`);
@@ -1042,12 +1043,12 @@ function createInterface() {
                     <div style="padding: 5px;">
                         <span style="padding-right: 5px;">Пароль:</span>
                         <div class="selectbox"><select id="htPasswordSelect" class="input select" style="max-width:25ch">
-                            <option>Без пароля</option>
+                            <!--<option>Без пароля</option>-->
                             <option>Ввести вручную</option>
                         </select></div>
                         <input id="htPasswordManagerButton" type="button" value="Менеджер паролей" />
                         <div id="htPasswordManagerDiv" align="center" style="padding-top:5px;"></div>
-                        <div id="htPasswordInputDiv" style="display:none;padding-top:5px;">
+                        <div id="htPasswordInputDiv" style="padding-top:5px;">
                             <input id="htPassword" placeholder="Без пароля" autocomplete="off" style="max-width:64ch;width:100%" />
                         </div>
                     </div>
@@ -1454,10 +1455,11 @@ function createInterface() {
     document.getElementById('htPasswordSelect').prevIndex = -1;
     document.getElementById('htPasswordSelect').onchange = function (e) {
         if (this.selectedIndex == this.prevIndex) return;
-        if (this.selectedIndex == 0) {
+        /*if (this.selectedIndex == 0) {
             document.getElementById('htPasswordInputDiv').style.display = 'none';
             document.getElementById('htPassword').value = '';
-        } else if (this.selectedIndex == 1) {
+        } else */
+		if (this.selectedIndex == 0) {
             document.getElementById('htPasswordInputDiv').style.display = 'block';
             document.getElementById('htPassword').style.color = '';
             document.getElementById('htPassword').readOnly = false;
@@ -1466,7 +1468,7 @@ function createInterface() {
             document.getElementById('htPasswordInputDiv').style.display = 'block';
             document.getElementById('htPassword').style.color = 'grey';
             document.getElementById('htPassword').readOnly = true;
-            document.getElementById('htPassword').value = passwords[this.selectedIndex - 2].value;
+            document.getElementById('htPassword').value = passwords[this.selectedIndex - 1].value;
         }
         this.prevIndex = this.selectedIndex;
     }
@@ -1762,7 +1764,7 @@ async function loadHiddenThread() {
     document.getElementById('htCacheSize').textContent = `???+ ${await getCacheSizeReadable()} (IDB usage: ${await getIdbUsageReadable()})`;
 
     // Добавляем пустой пароль
-    let actualPasswords = passwords.concat([{alias:'', value:''}]);
+    let actualPasswords = passwords;
 
     let passwordHashes = [];
     for (let password of actualPasswords) {
@@ -1827,7 +1829,7 @@ async function loadHiddenThread() {
 }
 
 function loadPasswordsAndKeys() {
-    passwords = storage.passwords ? storage.passwords : [];
+    passwords = storage.passwords ? storage.passwords : [{alias:'Без пароля', value:''}];
     passwordAliases = {};
     for (let password of passwords) {
         passwordAliases[password.value] = password.alias;
