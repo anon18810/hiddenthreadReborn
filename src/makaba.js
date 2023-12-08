@@ -391,9 +391,15 @@ async function addHiddenPostToHtml(postId, loadedPost, unpackedData) {
     let postArticleMessage = document.createElement('div');
     postArticleMessage.innerHTML = convertToHtml(unpackedData.message);
 
-    let tzOffset = (new Date()).getTimezoneOffset() * 60;
-    let timeString = (new Date((loadedPost.timestamp - tzOffset) * 1000))
-        .toISOString().replace('T', ' ').replace(/\.\d+Z/g, '');
+    //let tzOffset = (new Date()).getTimezoneOffset() * 60;
+	let postCreatedDate = new Date(loadedPost.timestamp * 1000);
+    let timeString = 
+		String(postCreatedDate.getDate()).padStart(2, '0') + '.' +
+		String(postCreatedDate.getMonth() + 1).padStart(2, '0') + '.' +
+		postCreatedDate.getFullYear() + ' ' + 
+		String(postCreatedDate.getHours()).padStart(2, '0') + ':' +
+		String(postCreatedDate.getMinutes()).padStart(2, '0') + ':' +
+		String(postCreatedDate.getSeconds()).padStart(2, '0');
     let d = clearPost.getElementsByClassName('post__time')[0].textContent.split(' ');
     let postDateMs = Date.parse(`20${d[0].split('/')[2]}-${d[0].split('/')[1]}-${d[0].split('/')[0]}T${d[2]}Z`);
     let incorrectTimeSpan = null;
@@ -404,7 +410,8 @@ async function addHiddenPostToHtml(postId, loadedPost, unpackedData) {
     }
 
     let postReplyLink = document.createElement('a');
-    postReplyLink.textContent = ' ответить';
+	postReplyLink.classList.add('post__reflink');
+    postReplyLink.textContent = 'Ответить';
     postReplyLink.href = '#';
     postReplyLink.onclick = function(e) {
         e.preventDefault();
@@ -449,8 +456,16 @@ async function addHiddenPostToHtml(postId, loadedPost, unpackedData) {
     }
 
     let postHeaderDiv = document.createElement('div');
-    let tzName = (new Date()).toLocaleDateString(undefined, { timeZoneName: 'short' }).split(',')[1].trim();
-    postHeaderDiv.appendChild(document.createTextNode(`Дата создания скрытопоста (${tzName}): ${timeString}`));
+	postHeaderDiv.classList.add("post__details");
+    let timeSpanPrefix = document.createElement('span');
+	timeSpanPrefix.classList.add("post__detailpart");
+	timeSpanPrefix.appendChild(document.createTextNode("Создан:"));
+    let timeSpan = document.createElement('span');
+	timeSpan.classList.add("post__time");
+	timeSpan.classList.add("post__detailpart");
+	timeSpan.appendChild(document.createTextNode(timeString));
+    postHeaderDiv.appendChild(timeSpanPrefix);
+    postHeaderDiv.appendChild(timeSpan);
     if (incorrectTimeSpan) postHeaderDiv.appendChild(incorrectTimeSpan);
     postHeaderDiv.appendChild(postReplyLink);
     postMetadata.appendChild(postHeaderDiv);
@@ -464,40 +479,43 @@ async function addHiddenPostToHtml(postId, loadedPost, unpackedData) {
         tmpDiv.style.whiteSpace = 'nowrap';
         tmpDiv.classList.add('hiddenthread_metadata');
         document.body.appendChild(tmpDiv);
-        tmpDiv.textContent = loadedPost.password;
+        tmpDiv.textContent = `(${loadedPost.password})`;
         let realPasswordWidth = tmpDiv.clientWidth;
-        const revealText = 'раскрыть'
+        const revealText = '(раскрыть)'
         tmpDiv.textContent = revealText;
         let realRevealPasswordWidth = tmpDiv.clientWidth;
         tmpDiv.remove();
-        postMetadata.appendChild(createElementFromHTML(`<div>Пароль: ${passwordAliases[loadedPost.password]} (`+
-            `<input readonly="" `+
-            `style="color:var(--theme_default_text);background-color:rgba(0, 0, 0, 0);border:0px;width:${realRevealPasswordWidth}px;`+
-            `padding-left:0px;padding-right:0px" value="${revealText}" `+
-            `onclick="this.value='${loadedPost.password}';this.style.width='${realPasswordWidth}px'">)</div>`));
+        postMetadata.appendChild(createElementFromHTML(
+			`<div class="post__details"><span class="post__detailpart">Пароль: ${escapeHtml(passwordAliases[loadedPost.password])}</span>`+
+            `<input class="post__reflink" readonly="" `+
+            `style="background-color:rgba(0, 0, 0, 0);border:0px;width:${realRevealPasswordWidth}px;`+
+			`padding-left:0px;padding-right:0px" value="${revealText}" `+
+            `onclick="this.value='(${escapeHtml(loadedPost.password)})';this.style.width='${realPasswordWidth}px'"></div>`));
     }
     if (loadedPost.isPrivate) {
         postMetadata.appendChild(createElementFromHTML(
-            `<div style="color:orange;"><i>Этот пост виден только с твоим приватным ключом `+
-            `(${privateKeyAliases[loadedPost.privateKey]})</i></div>`));
+            `<div style="color:orange;" class="post__details"><i>Этот пост виден только с твоим приватным ключом `+
+            `(${escapeHtml(privateKeyAliases[loadedPost.privateKey])})</i></div>`));
     }
     if (loadedPost.otherPublicKey) {
         let publicKeyAlias = otherPublicKeyAliases[loadedPost.otherPublicKey];
         if (!publicKeyAlias)
             publicKeyAlias = loadedPost.otherPublicKey;
         postMetadata.appendChild(createElementFromHTML(
-            `<div style="color:orange;"><i>Приватный пост для получателя ${publicKeyAlias}<br>`+
+             `<div style="color:orange;" class="post__details"><i>Приватный пост для получателя ${escapeHtml(publicKeyAlias)}<br>`+
             `(внимание: этот пост не будет вам виден после удаления из кэша)</i></div>`));
     }
 
     if (loadedPost.publicKey) {
         let postArticleSign = document.createElement('div');
+		postArticleSign.classList.add("post__details");
         let publicKeyAlias = otherPublicKeyAliases[loadedPost.publicKey];
         postArticleSign.innerHTML =
-            `${publicKeyAlias ? 'Отправитель' : 'Публичный ключ'}: <span style="word-wrap:normal;word-break:normal;color:` +
+            `<span class="post__detailpart">${publicKeyAlias ? 'Отправитель' : 'Публичный ключ'}:</span>` +
+			`<span class="post__detailpart" style="word-wrap:normal;word-break:normal;color:` +
             `${loadedPost.isVerified ? 'green' : 'red'};">` +
-            `${publicKeyAlias ? publicKeyAlias : loadedPost.publicKey}</span>` +
-            `${loadedPost.isVerified ? '' : ' (неверная подпись!)'}`;
+            `${escapeHtml(publicKeyAlias ? publicKeyAlias : loadedPost.publicKey)}</span>` +
+            `${loadedPost.isVerified ? '' : ' <span style="color: red;">(неверная подпись!)</span>'}`;
         postMetadata.appendChild(postArticleSign);
     }
 
@@ -507,7 +525,7 @@ async function addHiddenPostToHtml(postId, loadedPost, unpackedData) {
 
     if (unpackedData.unpackResult) {
         postArticle.appendChild(createElementFromHTML(
-            `<div style="font-family:courier new;color:red;">${unpackedData.unpackResult}</div>`));
+            `<div style="font-family:courier new;color:red;">${escapeHtml(unpackedData.unpackResult)}</div>`));
     }
     postArticle.appendChild(document.createElement('br'));
     postArticle.appendChild(postArticleMessage);
@@ -546,7 +564,7 @@ function createReplyLink(postId) {
 // Ссылка на пост в ответах
 function createPostRefLink(postId) {
     if (isDollchan()) {
-        return `<a href="#${postId}" class="de-link-backref">&gt;&gt;${postId}</a><span class="de-refcomma">, </span>`;
+        return `<a href="#${postId}" class="de-link-backref">&gt;&gt;${escapeHtml(postId)}</a><span class="de-refcomma">, </span>`;
     }
     else {
         return createReplyLink(postId);
@@ -597,6 +615,16 @@ function addReplyLinks(postId, refPostIdList) {
             }
         }
     }
+}
+
+function escapeHtml(msg)
+{
+	return msg
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
 }
 
 function parseMessage(message)
@@ -1217,9 +1245,6 @@ function createInterface() {
         .post_type_hiddenthread {
             border-left: 3px solid #${storage.postsColor ? storage.postsColor : 'F00000'};
             border-right: 3px solid #${storage.postsColor ? storage.postsColor : 'F00000'};
-        }
-        .hiddenthread_metadata {
-            font-family: courier new;
         }
     `
     style.appendChild(document.createTextNode(css));

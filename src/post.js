@@ -769,6 +769,7 @@ async function createFileLinksDiv(files, hasSkippedFiles, postId, isPreview) {
     let normalFilesCount = hasSkippedFiles > 0 ? files.length - 1 : files.length;
     for (let i = 0; i < normalFilesCount; i++) {
         let fileDiv = document.createElement('div');
+		fileDiv.classList.add('post__file-attr');
         fileDiv.style = 'display: inline-block;';
 
         let filename = files[i].name;
@@ -814,8 +815,8 @@ async function createFileLinksDiv(files, hasSkippedFiles, postId, isPreview) {
         fileLinksDiv.insertAdjacentText('afterbegin', 'Файлы (');
     }
     else {
-        if (isPreview) fileLinksDiv.insertAdjacentElement('afterbegin', document.createElement('br'));
-        fileLinksDiv.insertAdjacentText('afterbegin', 'Файлы: ');
+        //if (isPreview) fileLinksDiv.insertAdjacentElement('afterbegin', document.createElement('br'));
+        //fileLinksDiv.insertAdjacentText('afterbegin', 'Файлы: ');
     }
     return fileLinksDiv;
 }
