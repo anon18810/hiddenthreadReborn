@@ -1444,6 +1444,9 @@ function createInterface() {
         }
         createHiddenPostButton.value = oldText;
         createHiddenPostButton.disabled = false;
+        // >>**** cute/18879-кун **** Удаление загруженных файлов после каждого нажатия на "Создать картинку со скрытопостом"
+        document.getElementById('hiddenFilesInput').value = null;
+        // <<**** cute/18879-кун ****
     }
 
 

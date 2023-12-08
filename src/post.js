@@ -331,8 +331,30 @@ async function unzipPostData(zipData) {
     let filesCount = 0;
     try {
         let archive = await zip.loadAsync(zipData);
+        // >>**** cute/18879-кун ****
+		filesLength = Object.keys(archive.files).length;
+        if (filesLength > MAX_FILES_COUNT)
+        {
+			return {
+				'message': '',
+				'files': [],
+				'hasSkippedFiles': false,
+				'unpackResult': "Анон наспамил " + filesLength + " файлов",
+			};
+        }
+        // <<**** cute/18879-кун ****
 
         for (const filename in archive.files) {
+            // >>**** cute/18879-кун ****
+            if (archive.files[filename]._data.uncompressedSize / 1024 / 1024 > 20) {
+                return {
+                    'message': '',
+                    'files': [],
+                    'hasSkippedFiles': false,
+                    'unpackResult': "Анон вкинул файл весом более 20мб",
+                };
+            }
+            // <<**** cute/18879-кун ****
             filesCount++;
             if (filesCount > MAX_FILES_COUNT) {
                 hasSkippedFiles = true;
