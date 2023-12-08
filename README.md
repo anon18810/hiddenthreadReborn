@@ -10,7 +10,7 @@
 * [Tampermonkey](https://www.tampermonkey.net)
 
 Установите скрипт:
-* Зайти [сюда](./HiddenThread.user.js) и нажать на `Raw` справа. Кликните на `установить`.
+* Зайти [сюда](https://github.com/anon18810/hiddenthreadReborn/releases/download/v0.2/HiddenThread-anonfixv0.2.user.js). Кликните на `установить`.
 * Откройте любой тред, обновите страницу.
 * В треде под обычной формой постинга (не плавающей) появится вторая форма, через которую можно загрузить скрытопосты.
 
