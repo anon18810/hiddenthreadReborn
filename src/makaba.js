@@ -854,13 +854,21 @@ function CheckVersion() {
 }
 
 function addItemsToSelect(items, selectId) {
+	let element = document.getElementById(selectId);
     for (let item of items) {
         let option = document.createElement('option');
         let str = item.value ? `${item.alias} (${item.value})` : item.alias;
         let shortStr = str.substring(0, 20);
         option.textContent = shortStr + ((str.length != shortStr.length) ? '...' : '');
-        document.getElementById(selectId).add(option);
+        element.add(option);
     }
+	let selectedIndex = storage[selectId + "SelectedIndex"];
+	if (selectedIndex) {
+		element.selectedIndex = selectedIndex < element.options.length ? selectedIndex : 0;
+		if (element.onchange) {
+			element.onchange(undefined);
+		}
+	}
 }
 
 function createManager(managerType) {
@@ -1044,6 +1052,11 @@ function createInterface() {
             ? "Открыть"
             : "Закрыть"
     }
+    let settingsToggleText = () => {
+        return storage.hideSettingsForm
+            ? "Открыть настройки"
+            : "Закрыть настройки"
+    }
     let formTemplate = `
         <br>
         <div id="hiddenPostDiv" style="display: inline-block; text-align: left; ${isDollchan()?'min-width: 600px;':'width: 100%;'}">
@@ -1087,8 +1100,9 @@ function createInterface() {
                     <br>
                     <input id="hiddenFilesClearButton" class="mt-1" type="button" value="Очистить список файлов" />
                 </div>
-
-                <div style="padding: 5px;">
+                <div id="htPostingSettingsToggle" style="cursor: pointer;text-align:center">${settingsToggleText()}</div>
+				<div id="htPostingSettings" style="${storage.hideSettingsForm ? 'display:none' : ''}">
+					<div style="padding: 5px;">
                     <div style="font-size:large;text-align:center;">Настройки шифрования</div>
                     <div style="padding: 5px;">
                         <span style="padding-right: 5px;">Пароль:</span>
@@ -1243,6 +1257,7 @@ function createInterface() {
                         </div>
                     </div>
                 </div>
+				</div>
                 <br>
                 <div align="center">
                     <input id="createHiddenPostButton" type="button" value="Создать картинку со скрытопостом" style="padding: 5px;">
@@ -1402,6 +1417,16 @@ function createInterface() {
             ? "none"
             : ""
     }
+	
+	let toggleSettingsEl = document.getElementById("htPostingSettingsToggle")
+    toggleSettingsEl.onclick = () => {
+        setStorage({ hideSettingsForm: !storage.hideSettingsForm })
+        toggleSettingsEl.textContent = settingsToggleText();
+        let formEl = document.getElementById("htPostingSettings")
+        formEl.style.display = storage.hideSettingsForm
+            ? "none"
+            : ""
+    }
 
     document.getElementById('htContainerNameSelect').onchange = function () {
         document.getElementById('htContainerName').value = '';
@@ -1517,6 +1542,7 @@ function createInterface() {
             document.getElementById('htPassword').readOnly = true;
             document.getElementById('htPassword').value = passwords[this.selectedIndex - 1].value;
         }
+		setStorage({htPasswordSelectSelectedIndex: this.selectedIndex});
         this.prevIndex = this.selectedIndex;
     }
     document.getElementById('htPrivateKeySelect').prevIndex = -1;
@@ -1546,6 +1572,7 @@ function createInterface() {
             document.getElementById('htPrivatePhrase').value = '';
             document.getElementById('generateKeyPairButton').style.display = 'none';
         }
+		setStorage({htPrivateKeySelectSelectedIndex: this.selectedIndex});
         this.prevIndex = this.selectedIndex;
     }
     document.getElementById('htOtherPublicKeySelect').onchange = function (e) {
@@ -1564,6 +1591,7 @@ function createInterface() {
             document.getElementById('htOtherPublicKey').readOnly = true;
             document.getElementById('htOtherPublicKey').value = otherPublicKeys[this.selectedIndex - 2].value;
         }
+		setStorage({htOtherPublicKeySelectSelectedIndex: this.selectedIndex});
         this.prevIndex = this.selectedIndex;
     }
 
