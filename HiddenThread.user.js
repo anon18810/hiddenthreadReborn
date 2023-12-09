@@ -2903,6 +2903,7 @@ let Post = require('./post.js')
 let HtCache = require('./cache.js')
 
 const CURRENT_VERSION = "0.5.11";
+const CURRENT_VERSION_NUMERIC = 0.511;
 const VERSION_SOURCE = "https://raw.githubusercontent.com/anon25519/hiddenthread/main/version.info";
 const SCRIPT_SOURCE = 'https://github.com/anon25519/hiddenthread/raw/main/HiddenThread.user.js'
 
@@ -2941,6 +2942,25 @@ let setStorage = (value) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newStorage));
 }
 
+function checkForPreviousVersion() {
+	let storageVersion = storage.storageVersion;
+	let storageChanges = {};
+	
+	// Версия до добавления storage.storageVersion
+	if (!storageVersion) {
+		if (!storage.passwords || !storage.passwords.some((p) => p.value == '')) {
+			storageChanges.passwords = storage.passwords || [];
+			storageChanges.passwords.unshift({'alias': 'Без пароля', 'value': ''});
+		}
+	}
+	
+	if (storageVersion != CURRENT_VERSION_NUMERIC) {
+		storageChanges.storageVersion = CURRENT_VERSION_NUMERIC;
+	}
+	
+	if (Object.keys(storageChanges).length > 0) setStorage(storageChanges);
+}
+
 let passwordAliases = {};
 let privateKeyAliases = {};
 let otherPublicKeyAliases = {};
@@ -2954,6 +2974,8 @@ let otherPublicKeys = [];
 // Сопоставление нужных паролей к постам делается по IV
 // [{iv:'...', password:'...', otherPublicKey:'...'}, ...]
 let myPrivatePosts = [];
+
+checkForPreviousVersion();
 
 let decodeQueue = new Utils.Queue();
 let renderQueue = new Utils.Queue();
