@@ -346,7 +346,8 @@ async function unzipPostData(zipData) {
 
         for (const filename in archive.files) {
             // >>**** cute/18879-кун ****
-            if (archive.files[filename]._data.uncompressedSize / 1024 / 1024 > 20) {
+            let uncompressedSize = archive.files[filename]._data.uncompressedSize;
+            if (uncompressedSize / 1024 / 1024 > 20 || uncompressedSize < 0) {
                 return {
                     'message': '',
                     'files': [],
